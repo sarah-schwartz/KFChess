@@ -93,10 +93,19 @@ class CommandHistoryManager(Subscriber):
             from_pos = command.params[0]
             to_pos = command.params[1]
             return f"{time_str} {piece_type}: {from_pos} -> {to_pos}"
-        elif command.type == "jump" and len(command.params) >= 2:
-            from_pos = command.params[0]
-            to_pos = command.params[1]
-            return f"{time_str} {piece_type}: jump {from_pos} -> {to_pos}"
+        elif command.type == "jump":
+            if len(command.params) >= 2:
+                # Jump with from -> to positions
+                from_pos = command.params[0]
+                to_pos = command.params[1]
+                return f"{time_str} {piece_type}: jump {from_pos} -> {to_pos}"
+            elif len(command.params) >= 1:
+                # Jump with only current position
+                pos = command.params[0]
+                return f"{time_str} {piece_type}: jump at {pos}"
+            else:
+                # Jump without position info
+                return f"{time_str} {piece_type}: jump"
         else:
             return f"{time_str} {piece_type}: {command.type}"
 
@@ -116,10 +125,19 @@ class CommandHistoryManager(Subscriber):
             from_pos = command.params[0]
             to_pos = command.params[1]
             return f"{piece_type}: {from_pos} -> {to_pos}"
-        elif command.type == "jump" and len(command.params) >= 2:
-            from_pos = command.params[0]
-            to_pos = command.params[1]
-            return f"{piece_type}: jump {from_pos} -> {to_pos}"
+        elif command.type == "jump":
+            if len(command.params) >= 2:
+                # Jump with from -> to positions
+                from_pos = command.params[0]
+                to_pos = command.params[1]
+                return f"{piece_type}: jump {from_pos} -> {to_pos}"
+            elif len(command.params) >= 1:
+                # Jump with only current position
+                pos = command.params[0]
+                return f"{piece_type}: jump at {pos}"
+            else:
+                # Jump without position info
+                return f"{piece_type}: jump"
         else:
             return f"{piece_type}: {command.type}"
     
