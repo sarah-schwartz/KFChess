@@ -263,6 +263,15 @@ class Game:
                         continue
                     
                     logger.info(f"CAPTURE: {winner.id} captures {p.id} at {cell}")
+                    
+                    # Publish capture event for score tracking
+                    capture_data = {
+                        "piece_id": p.id,
+                        "captured_by": winner.id[1],  # Color (W/B) of capturing piece
+                        "captured_at": cell
+                    }
+                    self.event_publisher.send(EventType.PIECE_CAPTURED, capture_data)
+                    
                     self.pieces.remove(p)
                 else:
                     logger.debug(f"Piece {p.id} cannot be captured (state: {p.state.name})")
