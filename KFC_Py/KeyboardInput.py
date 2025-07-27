@@ -11,11 +11,11 @@ class KeyboardProcessor:
     into logical actions via a user‑supplied keymap.
     """
 
-    def __init__(self, rows: int, cols: int, keymap: dict[str, str]):
+    def __init__(self, rows: int, cols: int, keymap: dict[str, str], initial_pos: tuple[int, int] = (0, 0)):
         self.rows = rows
         self.cols = cols
         self.keymap = keymap
-        self._cursor = [0, 0] 
+        self._cursor = list(initial_pos)  # Start at specified position
         self._lock = threading.Lock()
 
     def process_key(self, event):
@@ -79,6 +79,8 @@ class KeyboardProducer(threading.Thread):
         self.player = player
         self.selected_id = None
         self.selected_cell = None
+        # Define which color each player controls
+        self.my_color = "W" if player == 1 else "B"
 
     def run(self):
         # Install our hook; it stays active until we call keyboard.unhook_all()
@@ -105,6 +107,12 @@ class KeyboardProducer(threading.Thread):
                 piece = self._find_piece_at(cell)
                 if not piece:
                     print(f"[WARN] No piece at {cell}")
+                    return
+
+                # Check if the piece belongs to this player's color
+                piece_color = piece.id[1]  # W or B
+                if piece_color != self.my_color:
+                    print(f"[WARN] Player{self.player} ({self.my_color}) cannot select {piece.id} (color {piece_color})")
                     return
 
                 self.selected_id = piece.id

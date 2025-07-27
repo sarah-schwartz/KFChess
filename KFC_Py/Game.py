@@ -54,13 +54,16 @@ class Game:
             "f": "select", "space": "select", "g": "jump"
         }
 
-        # create two processors
+        # create two processors with initial positions
+        # Player 1 (white) starts at bottom (row 7), Player 2 (black) starts at top (row 0)
         self.kp1 = KeyboardProcessor(self.board.H_cells,
                                      self.board.W_cells,
-                                     keymap=p1_map)
+                                     keymap=p1_map,
+                                     initial_pos=(7, 0))  # White pieces start at bottom
         self.kp2 = KeyboardProcessor(self.board.H_cells,
                                      self.board.W_cells,
-                                     keymap=p2_map)
+                                     keymap=p2_map,
+                                     initial_pos=(0, 0))  # Black pieces start at top
 
         # **pass the player number** as the 4th argument!
         self.kb_prod_1 = KeyboardProducer(self,
