@@ -15,7 +15,7 @@ class KeyboardProcessor:
         self.rows = rows
         self.cols = cols
         self.keymap = keymap
-        self._cursor = [0, 0]  # [row, col]
+        self._cursor = [0, 0] 
         self._lock = threading.Lock()
 
     def process_key(self, event):

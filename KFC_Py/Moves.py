@@ -90,7 +90,12 @@ class Moves:
 
         move_tag = self.moves[(dr, dc)]
         if move_tag == "":  # No tag = can both capture/non-capture
-            return True
+            # For pieces without specific tags, allow move to empty square
+            # or capture only if there are opponent pieces (not same color)
+            if dst_pieces is None:
+                return True  # Empty square - allowed
+            # Check if there are any opponent pieces at destination
+            return len([p for p in dst_pieces if p.id[1] != my_color]) > 0
 
         if move_tag == "capture":
             return dst_pieces is not None and len([p for p in dst_pieces if p.id[1] != my_color]) > 0

@@ -2,6 +2,7 @@ import pathlib
 from Board import Board
 from PieceFactory import PieceFactory
 from Game import Game
+from GraphicsFactory import GraphicsFactory
 
 CELL_PX = 64
 
@@ -29,7 +30,6 @@ def create_game(pieces_root: str | pathlib.Path, img_factory) -> Game:
 
     board = Board(CELL_PX, CELL_PX, 8, 8, board_img)
 
-    from GraphicsFactory import GraphicsFactory
     gfx_factory = GraphicsFactory(img_factory)
     pf = PieceFactory(board, pieces_root, graphics_factory=gfx_factory)
 

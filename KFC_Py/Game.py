@@ -25,13 +25,13 @@ class Game:
         self.piece_by_id = {p.id: p for p in pieces}
         self.pos: Dict[Tuple[int, int], List[Piece]] = defaultdict(list)
         self.START_NS = time.time_ns()
-        self._time_factor = 1  # Add this line
+        self._time_factor = 1  
         self.kp1 = None
         self.kp2 = None
         self.kb_prod_1 = None
         self.kb_prod_2 = None
         self.selected_id_1: Optional[str] = None
-        self.selected_id_2: Optional[str] = None  # Add this line
+        self.selected_id_2: Optional[str] = None  
         self.last_cursor1 = (0, 0)
         self.last_cursor2 = (0, 0)
 
@@ -132,9 +132,9 @@ class Game:
             ):
                 r, c = kp.get_cursor()
                 # draw rectangle
-                y1 = r * self.board.cell_H_pix;
+                y1 = r * self.board.cell_H_pix
                 x1 = c * self.board.cell_W_pix
-                y2 = y1 + self.board.cell_H_pix - 1;
+                y2 = y1 + self.board.cell_H_pix - 1
                 x2 = x1 + self.board.cell_W_pix - 1
                 color = (0, 255, 0) if player == 1 else (255, 0, 0)
                 self.curr_board.img.draw_rect(x1, y1, x2, y2, color)
@@ -211,9 +211,10 @@ class Game:
                     if winner.id.startswith(('NW', 'NB')) and winner.state.name == 'move':
                         logger.debug(f"Winner knight {winner.id} is moving (jumping) - not removing {p.id}")
                         continue
-                    # Don't remove pieces if the winner is resting (winner cannot capture)
-                    if winner.state.name in ['short_rest', 'long_rest']:
-                        logger.debug(f"Winner {winner.id} is resting - not removing {p.id}")
+                    
+                    # Don't capture pieces of the same color (friendly pieces)
+                    if winner.id[1] == p.id[1]:  # Same color (W/B)
+                        logger.debug(f"Winner {winner.id} and {p.id} are same color - not capturing")
                         continue
                     
                     logger.info(f"CAPTURE: {winner.id} captures {p.id} at {cell}")
