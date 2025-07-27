@@ -178,29 +178,32 @@ class Game:
             logger.debug("Unknown piece id %s", cmd.piece_id)
             return
 
-        # Store previous position to check for movement
+        # Store previous position and state to check for actual movement
         old_position = mover.current_cell()
-        print(f"DEBUG: {cmd.piece_id} is at {old_position} before processing command {cmd.type}")
+        old_state_name = mover.state.name
+        print(f"DEBUG: {cmd.piece_id} is at {old_position} in state {old_state_name} before processing command {cmd.type}")
 
         # Process the command - Piece.on_command() determines my_color internally
         mover.on_command(cmd, self.pos)
         
-        # Check if piece actually moved
+        # Check if piece actually moved or changed state meaningfully
         new_position = mover.current_cell()
-        print(f"DEBUG: {cmd.piece_id} is at {new_position} after processing command")
+        new_state_name = mover.state.name
+        print(f"DEBUG: {cmd.piece_id} is at {new_position} in state {new_state_name} after processing command")
         
-        # For move commands, always publish the event since the piece will move
-        if cmd.type in ["move", "jump"]:
-            print(f"DEBUG: Publishing move event for {cmd.piece_id} - {cmd.type} command")
+        # Publish event only if:
+        # 1. Position actually changed, OR
+        # 2. State changed to a movement state (move, jump) indicating valid command acceptance
+        position_changed = old_position != new_position
+        state_changed_to_movement = (old_state_name != new_state_name and 
+                                   new_state_name in ["move", "jump"])
+        
+        if position_changed or state_changed_to_movement:
+            print(f"DEBUG: Publishing move event for {cmd.piece_id} - valid action detected")
             self.event_publisher.send(EventType.PIECE_MOVED, cmd)
-            logger.info(f"Move command processed: {cmd.piece_id} {cmd.type} from {old_position}")
-        elif old_position != new_position:
-            # For other commands, only publish if position actually changed
-            print(f"DEBUG: Publishing move event for {cmd.piece_id} - position changed")
-            self.event_publisher.send(EventType.PIECE_MOVED, cmd)
-            logger.info(f"Piece moved: {cmd.piece_id} from {old_position} to {new_position}")
+            logger.info(f"Valid action: {cmd.piece_id} {cmd.type} - pos change: {position_changed}, state change: {state_changed_to_movement}")
         else:
-            print(f"DEBUG: No move event for {cmd.piece_id} - no position change")
+            print(f"DEBUG: No move event for {cmd.piece_id} - command rejected or ineffective")
         
         logger.info(f"Processed command: {cmd} for piece {cmd.piece_id}")
 

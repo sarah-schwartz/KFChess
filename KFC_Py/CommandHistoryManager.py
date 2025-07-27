@@ -39,7 +39,10 @@ class CommandHistoryManager(Subscriber):
         if event_type == EventType.PIECE_MOVED and isinstance(data, Command):
             # Check if command belongs to current player
             if self._is_my_piece(data.piece_id):
-                self._add_command_to_history(data)
+                # Only record moves that are likely valid
+                # (for now, record all move/jump commands as the game logic handles validation)
+                if data.type in ["move", "jump"]:
+                    self._add_command_to_history(data)
     
     def _is_my_piece(self, piece_id: str) -> bool:
         """
