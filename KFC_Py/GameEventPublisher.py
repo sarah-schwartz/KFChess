@@ -1,6 +1,5 @@
 from Command import Command
 from MessageBroker import MessageBroker
-from EventQueue import EventQueue
 from EventType import EventType
 class GameEventPublisher:
         def __init__(self, broker: MessageBroker):

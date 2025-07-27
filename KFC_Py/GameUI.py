@@ -4,6 +4,8 @@ from typing import Dict, List, Tuple, Optional
 from img import Img
 from Board import Board
 from Game import Game
+from GameHistoryDisplay import GameHistoryDisplay
+from MessageBroker import MessageBroker
 import logging
 
 logger = logging.getLogger(__name__)
@@ -15,14 +17,19 @@ class GameUI:
     including background image, player scores, and move history.
     """
     
-    def __init__(self, game: Game, pieces_folder: pathlib.Path):
+    def __init__(self, game, pieces_folder: pathlib.Path, broker: MessageBroker):
         self.game = game
         self.pieces_folder = pieces_folder
+        self.broker = broker
+        
+        # יצירת מנהל תצוגת ההיסטוריה
+        self.history_display = GameHistoryDisplay(broker)
+        
         self.background_img = None
         self.ui_width = 1200  # Total UI width
         self.ui_height = 800  # Total UI height
-        self.board_size = 512  # Board display size (8x8 cells * 64px)
-        self.sidebar_width = 300  # Width for scores and moves display
+        self.board_size = 600  # Board display size - increased from 512 to 600
+        self.sidebar_width = 280  # Width for scores and moves display - reduced for better fit
         
         # Player data for UI display
         self.player1_moves: List[str] = []
@@ -105,26 +112,10 @@ class GameUI:
         self._draw_ui_panels()
     
     def _draw_ui_panels(self):
-        """Draw the UI panels and borders."""
-        # Two panels on the sides of the board, each quarter width
-        # Panels are centered vertically and don't span full height
-        
-        panel_width = self.ui_width // 4  # Quarter width for each panel
-        panel_height = self.board_size  # Same height as the board
-        panel_y = (self.ui_height - panel_height) // 2  # Center vertically
-        
-        # Player 1 panel (left side) - just border, no fill (transparent)
-        cv2.rectangle(self.ui_canvas,
-                     (0, panel_y),
-                     (panel_width, panel_y + panel_height),
-                     self.player1_color, 3)
-        
-        # Player 2 panel (right side) - just border, no fill (transparent)
-        right_panel_x = self.ui_width - panel_width
-        cv2.rectangle(self.ui_canvas,
-                     (right_panel_x, panel_y),
-                     (self.ui_width, panel_y + panel_height),
-                     self.player2_color, 3)
+        """Draw the UI panels - areas for player information on the sides."""
+        # These are just layout areas - no actual drawing needed
+        # The player information will be drawn by _draw_player_info_with_history
+        pass
     
     def update_board_with_background(self, board: Board):
         """Update the game board to include the original board image, not the background."""
@@ -191,6 +182,39 @@ class GameUI:
         
         logger.debug(f"Player {player} score updated: {score}")
     
+    def _draw_player_info_with_history(self, player: int, x: int, y: int):
+        """Draw player information panel with command history."""
+        # Determine player color for MessageBroker
+        player_color = "W" if player == 1 else "B"
+        
+        # Get history data
+        history_lines = self.history_display.get_formatted_display_text(player_color)
+        move_counts = self.history_display.get_move_counts()
+        
+        color = self.player1_color if player == 1 else self.player2_color
+        
+        # Player title
+        player_name = "White Player" if player == 1 else "Black Player"
+        cv2.putText(self.ui_canvas, player_name, (x + 10, y + 30),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2, cv2.LINE_AA)
+        
+        # Move count
+        move_count = move_counts["white"] if player == 1 else move_counts["black"]
+        count_text = f"Moves: {move_count}"
+        cv2.putText(self.ui_canvas, count_text, (x + 10, y + 60),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.6, self.text_color, 1, cv2.LINE_AA)
+        
+        # Display history - starts with just title, fills as moves are made
+        for i, line in enumerate(history_lines[:12]):  # Show up to 12 lines
+            line_y = y + 90 + (i * 20)
+            try:
+                cv2.putText(self.ui_canvas, line, (x + 15, line_y),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.4, self.text_color, 1, cv2.LINE_AA)
+            except:
+                # Fallback if there's an issue with text
+                cv2.putText(self.ui_canvas, f"Move {i+1}", (x + 15, line_y),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.4, self.text_color, 1, cv2.LINE_AA)
+    
     def _draw_player_info(self, player: int, x: int, y: int):
         """Draw player information panel."""
         moves = self.player1_moves if player == 1 else self.player2_moves
@@ -254,11 +278,16 @@ class GameUI:
             self.ui_canvas[board_y:board_y + self.board_size, 
                           board_x:board_x + self.board_size] = board_resized
         
-        # Draw player information on the sides - TEMPORARILY DISABLED
-        # panel_width = self.ui_width // 4
-        # self._draw_player_info(1, 20, self.ui_height // 2 - 100)   # Player 1 - left side
-        # right_panel_x = self.ui_width - panel_width
-        # self._draw_player_info(2, right_panel_x + 20, self.ui_height // 2 - 100)  # Player 2 - right side
+        # Draw player information on the sides - aligned with board top edge
+        board_y = (self.ui_height - self.board_size) // 2  # Calculate board's top position
+        board_x = (self.ui_width - self.board_size) // 2   # Calculate board's left position
+        
+        # Left panel - same position
+        self._draw_player_info_with_history(1, 20, board_y)   # Player 1 - left side, aligned with board top
+        
+        # Right panel - closer to the board
+        right_panel_x = board_x + self.board_size + 20  # 20px gap from board edge
+        self._draw_player_info_with_history(2, right_panel_x, board_y)  # Player 2 - right side, closer to board
         
         # Title removed as requested
     
@@ -330,15 +359,19 @@ def test_ui_display():
     """Test function to display the UI with sample data."""
     import numpy as np
     from Board import Board
+    from MessageBroker import MessageBroker
     
     # Create a dummy game board for testing
     dummy_img = Img()
     dummy_img.img = np.zeros((512, 512, 3), dtype=np.uint8)
     dummy_board = Board(64, 64, 8, 8, dummy_img)
     
+    # Create MessageBroker for UI
+    broker = MessageBroker()
+    
     # Create UI with sample data
     pieces_path = pathlib.Path("../pieces")
-    ui = GameUI(None, pieces_path)  # None game for testing
+    ui = GameUI(None, pieces_path, broker)  # Include broker parameter
     ui.simulate_sample_data()
     ui.render_complete_ui(dummy_board)
     

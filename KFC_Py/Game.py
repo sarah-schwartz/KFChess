@@ -5,7 +5,9 @@ from collections import defaultdict
 from Board import Board
 from Command import Command
 from Piece import Piece
-
+from GameEventPublisher import GameEventPublisher
+from MessageBroker import MessageBroker
+from EventType import EventType
 
 from KeyboardInput import KeyboardProcessor, KeyboardProducer
 
@@ -17,7 +19,7 @@ class InvalidBoard(Exception): ...
 
 
 class Game:
-    def __init__(self, pieces: List[Piece], board: Board):
+    def __init__(self, pieces: List[Piece], board: Board, broker: MessageBroker = None, ui=None):
         self.pieces = pieces
         self.board = board
         self.curr_board = None
@@ -34,6 +36,16 @@ class Game:
         self.selected_id_2: Optional[str] = None  
         self.last_cursor1 = (0, 0)
         self.last_cursor2 = (0, 0)
+        
+        # Add support for event publishing
+        self.broker = broker if broker else MessageBroker()
+        self.event_publisher = GameEventPublisher(self.broker)
+        
+        # UI instance for rendering
+        self.ui = ui
+        
+        # הוספת תמיכה בממשק המשתמש החדש
+        self.ui = ui
 
     def game_time_ms(self) -> int:
         return self._time_factor * (time.monotonic_ns() - self.START_NS) // 1_000_000
@@ -149,7 +161,13 @@ class Game:
                     setattr(self, last, (r, c))
 
     def _show(self):
-        self.curr_board.show()
+        if self.ui:
+            # שימוש בממשק המשתמש החדש
+            self.ui.render_complete_ui(self.curr_board)
+            self.ui.show()
+        else:
+            # fallback לממשק הישן
+            self.curr_board.show()
 
     def _side_of(self, piece_id: str) -> str:
         return piece_id[1]
@@ -160,8 +178,29 @@ class Game:
             logger.debug("Unknown piece id %s", cmd.piece_id)
             return
 
+        # Store previous position to check for movement
+        old_position = mover.current_cell()
+        print(f"DEBUG: {cmd.piece_id} is at {old_position} before processing command {cmd.type}")
+
         # Process the command - Piece.on_command() determines my_color internally
         mover.on_command(cmd, self.pos)
+        
+        # Check if piece actually moved
+        new_position = mover.current_cell()
+        print(f"DEBUG: {cmd.piece_id} is at {new_position} after processing command")
+        
+        # For move commands, always publish the event since the piece will move
+        if cmd.type in ["move", "jump"]:
+            print(f"DEBUG: Publishing move event for {cmd.piece_id} - {cmd.type} command")
+            self.event_publisher.send(EventType.PIECE_MOVED, cmd)
+            logger.info(f"Move command processed: {cmd.piece_id} {cmd.type} from {old_position}")
+        elif old_position != new_position:
+            # For other commands, only publish if position actually changed
+            print(f"DEBUG: Publishing move event for {cmd.piece_id} - position changed")
+            self.event_publisher.send(EventType.PIECE_MOVED, cmd)
+            logger.info(f"Piece moved: {cmd.piece_id} from {old_position} to {new_position}")
+        else:
+            print(f"DEBUG: No move event for {cmd.piece_id} - no position change")
         
         logger.info(f"Processed command: {cmd} for piece {cmd.piece_id}")
 

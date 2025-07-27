@@ -3,7 +3,9 @@ from Board import Board
 from PieceFactory import PieceFactory
 from Game import Game
 from GraphicsFactory import GraphicsFactory
-from GameUI import enhance_game_with_ui
+from GameUI import GameUI
+from GameHistoryDisplay import GameHistoryDisplay
+from MessageBroker import MessageBroker
 
 CELL_PX = 64
 
@@ -14,6 +16,26 @@ def create_game(pieces_root: str | pathlib.Path, img_factory) -> Game:
     This reads *board.csv* located inside *pieces_root*, creates a blank board
     (or loads board.png if present), instantiates every piece via PieceFactory
     and returns a ready-to-run *Game* instance.
+    
+    For backward compatibility, this returns only the Game object.
+    Use create_game_with_history() for the full tuple with history management.
+    
+    Returns:
+        Game: The game instance
+    """
+    game, ui, history_display, broker = create_game_with_history(pieces_root, img_factory)
+    return game
+
+
+def create_game_with_history(pieces_root: str | pathlib.Path, img_factory) -> tuple:
+    """Build a *Game* from the on-disk asset hierarchy rooted at *pieces_root*.
+
+    This reads *board.csv* located inside *pieces_root*, creates a blank board
+    (or loads board.png if present), instantiates every piece via PieceFactory
+    and returns a ready-to-run *Game* instance with history management.
+    
+    Returns:
+        tuple: (game, ui, history_display, broker)
     """
     pieces_root = pathlib.Path(pieces_root)
     board_csv = pieces_root / "board.csv"
@@ -43,12 +65,19 @@ def create_game(pieces_root: str | pathlib.Path, img_factory) -> Game:
                 if code:
                     pieces.append(pf.create_piece(code, (r, c)))
 
-    game = Game(pieces, board)
+    # Create the game with history management system
+    broker = MessageBroker()
     
-    # Enhance the game with the new UI system
-    game_ui = enhance_game_with_ui(game, pieces_root)
+    # Create UI with broker
+    ui = GameUI(None, pieces_root, broker)  # Pass None for game temporarily
     
-    # Add some sample data for demonstration
-    game_ui.simulate_sample_data()
+    # Create game with broker and UI
+    game = Game(pieces, board, broker, ui)
     
-    return game 
+    # Set game reference in UI
+    ui.game = game
+    
+    # Get history display from UI
+    history_display = ui.history_display
+    
+    return game, ui, history_display, broker 
