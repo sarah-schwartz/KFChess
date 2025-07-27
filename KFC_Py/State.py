@@ -56,6 +56,10 @@ class State:
                 logger.debug(f"Invalid move: {current_cell} → {dst_cell}")
                 logger.debug(f"Move validation failed for piece color: {my_color}")
                 return self
+        
+        elif cmd.type == "jump":
+            # For jump, we just transition to the next state without validation here
+            pass
 
         logger.debug("[TRANSITION] %s: %s → %s", cmd.type, self, nxt)
 

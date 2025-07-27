@@ -64,12 +64,6 @@ class KeyboardProcessor:
 
 
 class KeyboardProducer(threading.Thread):
-    """
-    Runs in its own daemon thread; hooks into the `keyboard` lib,
-    polls events, translates them via the KeyboardProcessor,
-    and turns `select`/`jump` into Command objects on the Game queue.
-    Each producer is tied to a player number (1 or 2).
-    """
 
     def __init__(self, game, queue, processor: KeyboardProcessor, player: int):
         super().__init__(daemon=True)
@@ -153,6 +147,22 @@ class KeyboardProducer(threading.Thread):
                     self.game.selected_id_1 = None
                 else:
                     self.game.selected_id_2 = None
+
+        elif action == "jump":
+            if self.selected_id is None:
+                print(f"[WARN] Player{self.player} tried to jump but no piece selected")
+                return
+            
+            cmd = Command(
+                self.game.game_time_ms(),
+                self.selected_id,
+                "jump",
+                [self.selected_cell]  # Pass current cell to the command
+            )
+            self.queue.put(cmd)
+            logger.info(f"Player{self.player} queued {cmd}")
+            # We don't deselect the piece after a jump
+
 
     def stop(self):
         keyboard.unhook_all()
