@@ -26,7 +26,7 @@ class Game:
         self.user_input_queue = queue.Queue()
         self.piece_by_id = {p.id: p for p in pieces}
         self.pos: Dict[Tuple[int, int], List[Piece]] = defaultdict(list)
-        self.START_NS = time.time_ns()
+        self.START_NS = time.monotonic_ns()  # Use monotonic time for consistency
         self._time_factor = 1  
         self.kp1 = None
         self.kp2 = None

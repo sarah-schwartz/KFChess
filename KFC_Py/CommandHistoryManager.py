@@ -147,17 +147,14 @@ class CommandHistoryManager(Subscriber):
     
     def _format_timestamp(self, timestamp_ms: int) -> str:
         """
-        Format timestamp for display as hours:minutes:seconds.
+        Format timestamp for display as elapsed time from game start in HH:MM:SS format.
         
         Args:
             timestamp_ms: Time in milliseconds from game start
             
         Returns:
-            Formatted time for display (HH:MM:SS)
+            Formatted time for display (HH:MM:SS showing elapsed time)
         """
-        # Debug: print what we receive
-        # print(f"DEBUG: Received timestamp_ms = {timestamp_ms}")
-        
         # Convert timestamp to seconds - handle both positive and negative values
         if timestamp_ms < 0:
             # If negative, use absolute value
@@ -165,16 +162,13 @@ class CommandHistoryManager(Subscriber):
         else:
             total_seconds = timestamp_ms // 1000
             
-        # print(f"DEBUG: total_seconds = {total_seconds}")
-        
+        # Calculate hours, minutes, seconds from elapsed time
         hours = total_seconds // 3600
         minutes = (total_seconds % 3600) // 60
         seconds = total_seconds % 60
         
-        # print(f"DEBUG: hours={hours}, minutes={minutes}, seconds={seconds}")
-        
+        # Format as HH:MM:SS
         time_str = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
-        # print(f"DEBUG: Final time_str = '{time_str}'")
         
         return time_str
     
