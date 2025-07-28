@@ -355,14 +355,23 @@ class Game:
         })
         
         # Give time for the victory message to display before the game closes
-        # Show the final game state with the victory message
+        # Show the final game state with the victory message until it disappears
         if self.ui:
-            # Display the final state with the victory message for a few seconds
-            end_time = time.time() + 5.0  # Show for 5 seconds
-            while time.time() < end_time:
+            # Display the final state with the victory message until the message is gone
+            while True:
                 # Keep updating the display to show the victory message
                 self._draw()
                 self._show()
+                
+                # Update message display and check if message is still visible
                 if hasattr(self.ui, 'message_display'):
                     self.ui.message_display.update()
+                    # Exit when message is no longer visible
+                    if self.ui.message_display.current_message is None:
+                        break
+                else:
+                    # Fallback: if no message display, wait 4 seconds
+                    time.sleep(4.0)
+                    break
+                
                 time.sleep(0.1)  # Small delay to avoid consuming too much CPU
