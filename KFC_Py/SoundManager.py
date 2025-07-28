@@ -1,6 +1,6 @@
 import pygame
 import pathlib
-from typing import Dict
+from typing import Dict, Union
 from Subscriber import Subscriber
 from EventType import EventType
 from MessageBroker import MessageBroker
@@ -11,16 +11,20 @@ class SoundManager(Subscriber):
     Plays sounds for piece movements and captures.
     """
     
-    def __init__(self, broker: MessageBroker, sounds_folder: pathlib.Path):
+    def __init__(self, broker: MessageBroker, sounds_folder: Union[str, pathlib.Path]):
         """
         Initialize sound manager.
         
         Args:
             broker: MessageBroker for receiving game events
-            sounds_folder: Path to folder containing sound files
+            sounds_folder: Path to folder containing sound files (str or pathlib.Path)
         """
         self.broker = broker
-        self.sounds_folder = sounds_folder
+        # Convert string to pathlib.Path if needed
+        if isinstance(sounds_folder, str):
+            self.sounds_folder = pathlib.Path(sounds_folder)
+        else:
+            self.sounds_folder = sounds_folder
         self.sounds: Dict[str, pygame.mixer.Sound] = {}
         
         # Initialize pygame mixer
@@ -32,12 +36,14 @@ class SoundManager(Subscriber):
         # Subscribe to game events
         self.broker.subscribe(EventType.PIECE_MOVED, self)
         self.broker.subscribe(EventType.PIECE_CAPTURED, self)
+        self.broker.subscribe(EventType.INVALID_MOVE, self)
     
     def _load_sounds(self):
         """Load all sound files from the sounds folder."""
         try:
             move_path = self.sounds_folder / "move.wav"
             capture_path = self.sounds_folder / "capture.wav"
+            fail_path = self.sounds_folder / "fail.mp3"
             
             if move_path.exists():
                 self.sounds["move"] = pygame.mixer.Sound(str(move_path))
@@ -50,6 +56,12 @@ class SoundManager(Subscriber):
                 print(f"DEBUG: Loaded capture sound from {capture_path}")
             else:
                 print(f"WARNING: Capture sound file not found at {capture_path}")
+                
+            if fail_path.exists():
+                self.sounds["fail"] = pygame.mixer.Sound(str(fail_path))
+                print(f"DEBUG: Loaded fail sound from {fail_path}")
+            else:
+                print(f"WARNING: Fail sound file not found at {fail_path}")
                 
         except Exception as e:
             print(f"ERROR: Failed to load sounds: {e}")
@@ -67,6 +79,8 @@ class SoundManager(Subscriber):
                 self._play_move_sound()
             elif event_type == EventType.PIECE_CAPTURED:
                 self._play_capture_sound()
+            elif event_type == EventType.INVALID_MOVE:
+                self._play_fail_sound()
         except Exception as e:
             print(f"ERROR: Failed to handle sound event {event_type}: {e}")
     
@@ -85,6 +99,14 @@ class SoundManager(Subscriber):
             print("DEBUG: Played capture sound")
         else:
             print("WARNING: Capture sound not available")
+    
+    def _play_fail_sound(self):
+        """Play the fail sound effect for invalid moves."""
+        if "fail" in self.sounds:
+            self.sounds["fail"].play()
+            print("DEBUG: Played fail sound")
+        else:
+            print("WARNING: Fail sound not available")
     
     def set_volume(self, volume: float):
         """

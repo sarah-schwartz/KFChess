@@ -61,6 +61,7 @@ class TestSoundManager(unittest.TestCase):
         # Check that sound manager subscribed to events
         self.assertIn(EventType.PIECE_MOVED, self.broker.subscribers)
         self.assertIn(EventType.PIECE_CAPTURED, self.broker.subscribers)
+        self.assertIn(EventType.INVALID_MOVE, self.broker.subscribers)
 
     def test_missing_sound_files(self):
         """Test SoundManager behavior when sound files are missing."""
@@ -74,33 +75,83 @@ class TestSoundManager(unittest.TestCase):
 
     def test_piece_moved_event_handling(self):
         """Test that PIECE_MOVED events trigger move sound playback."""
-        sound_manager = SoundManager(self.broker, self.sounds_folder)
-        
-        # Create a test command
-        test_command = Command(1000, "PW", "move", [(1, 1), (2, 2)])
-        
-        # Publish PIECE_MOVED event - should not crash
-        self.broker.publish(EventType.PIECE_MOVED, test_command)
+        with unittest.mock.patch('pygame.mixer.Sound') as mock_sound_class:
+            # Mock the Sound objects
+            mock_move_sound = unittest.mock.Mock()
+            mock_sound_class.return_value = mock_move_sound
+            
+            sound_manager = SoundManager(self.broker, self.sounds_folder)
+            
+            # Manually add the move sound to simulate it being loaded
+            sound_manager.sounds['move'] = mock_move_sound
+            
+            # Create a test command
+            test_command = Command(1000, "PW", "move", [(1, 1), (2, 2)])
+            
+            # Publish PIECE_MOVED event
+            self.broker.publish(EventType.PIECE_MOVED, test_command)
+            
+            # Verify that play() was called on the move sound
+            mock_move_sound.play.assert_called_once()
         
         # If we get here without exception, the test passed
         self.assertTrue(True, "Event handling completed without errors")
 
     def test_piece_captured_event_handling(self):
         """Test that PIECE_CAPTURED events trigger capture sound playback."""
-        sound_manager = SoundManager(self.broker, self.sounds_folder)
-        
-        # Create test capture data
-        capture_data = {
-            "piece_id": "PB",
-            "captured_by": "W",
-            "captured_at": (3, 3)
-        }
-        
-        # Publish PIECE_CAPTURED event - should not crash
-        self.broker.publish(EventType.PIECE_CAPTURED, capture_data)
+        with unittest.mock.patch('pygame.mixer.Sound') as mock_sound_class:
+            # Mock the Sound objects
+            mock_capture_sound = unittest.mock.Mock()
+            mock_sound_class.return_value = mock_capture_sound
+            
+            sound_manager = SoundManager(self.broker, self.sounds_folder)
+            
+            # Manually add the capture sound to simulate it being loaded
+            sound_manager.sounds['capture'] = mock_capture_sound
+            
+            # Create test capture data
+            capture_data = {
+                "piece_id": "PB",
+                "captured_by": "W",
+                "captured_at": (3, 3)
+            }
+            
+            # Publish PIECE_CAPTURED event
+            self.broker.publish(EventType.PIECE_CAPTURED, capture_data)
+            
+            # Verify that play() was called on the capture sound
+            mock_capture_sound.play.assert_called_once()
         
         # If we get here without exception, the test passed
         self.assertTrue(True, "Event handling completed without errors")
+
+    def test_invalid_move_event_handling(self):
+        """Test that INVALID_MOVE events trigger fail sound playback."""
+        with unittest.mock.patch('pygame.mixer.Sound') as mock_sound_class:
+            # Mock the Sound objects
+            mock_fail_sound = unittest.mock.Mock()
+            mock_sound_class.return_value = mock_fail_sound
+            
+            sound_manager = SoundManager(self.broker, self.sounds_folder)
+            
+            # Manually add the fail sound to simulate it being loaded
+            sound_manager.sounds['fail'] = mock_fail_sound
+            
+            # Create test invalid move data
+            invalid_move_data = {
+                "piece_id": "PW_1",
+                "attempted_move": [(1, 1), (1, 3)],
+                "reason": "Invalid pawn move"
+            }
+            
+            # Publish INVALID_MOVE event
+            self.broker.publish(EventType.INVALID_MOVE, invalid_move_data)
+            
+            # Verify that play() was called on the fail sound
+            mock_fail_sound.play.assert_called_once()
+        
+        # If we get here without exception, the test passed
+        self.assertTrue(True, "INVALID_MOVE event handling completed without errors")
 
     def test_volume_control(self):
         """Test volume control functionality."""

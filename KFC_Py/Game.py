@@ -208,6 +208,16 @@ class Game:
             logger.info(f"Valid action: {cmd.piece_id} {cmd.type} - pos change: {position_changed}, state change: {state_changed_to_movement}")
         else:
             print(f"DEBUG: No move event for {cmd.piece_id} - command rejected or ineffective")
+            # Publish INVALID_MOVE event for rejected commands (especially move commands)
+            if cmd.type == "move":
+                print(f"DEBUG: Publishing INVALID_MOVE event for {cmd.piece_id}")
+                self.event_publisher.send(EventType.INVALID_MOVE, {
+                    "piece_id": cmd.piece_id,
+                    "attempted_move": cmd.cells if hasattr(cmd, 'cells') else cmd.params,
+                    "command": cmd,
+                    "reason": "Move validation failed or command was ineffective"
+                })
+                logger.info(f"Invalid move attempted: {cmd.piece_id} {cmd.type}")
         
         logger.info(f"Processed command: {cmd} for piece {cmd.piece_id}")
 
