@@ -5,6 +5,7 @@ from img import Img
 from Board import Board
 from Game import Game
 from GameHistoryDisplay import GameHistoryDisplay
+from PlayerNamesManager import PlayerNamesManager
 from MessageBroker import MessageBroker
 import logging
 
@@ -17,13 +18,14 @@ class GameUI:
     including background image, player scores, and move history.
     """
     
-    def __init__(self, game, pieces_folder: pathlib.Path, broker: MessageBroker):
+    def __init__(self, game, pieces_folder: pathlib.Path, broker: MessageBroker, player_names_manager: PlayerNamesManager = None):
         self.game = game
         self.pieces_folder = pieces_folder
         self.broker = broker
         
-        # יצירת מנהל תצוגת ההיסטוריה
-        self.history_display = GameHistoryDisplay(broker)
+        # יצירת מנהל תצוגת ההיסטוריה עם מנהל השמות
+        self.player_names_manager = player_names_manager if player_names_manager else PlayerNamesManager()
+        self.history_display = GameHistoryDisplay(broker, self.player_names_manager)
         
         self.background_img = None
         self.ui_width = 1200  # Total UI width
@@ -183,7 +185,7 @@ class GameUI:
         logger.debug(f"Player {player} score updated: {score}")
     
     def _draw_player_info_with_history(self, player: int, x: int, y: int):
-        """Draw player information panel with command history."""
+        """Draw player information panel with command history (without player name - shown separately)."""
         # Determine player color for MessageBroker
         player_color = "W" if player == 1 else "B"
         
@@ -193,20 +195,20 @@ class GameUI:
         
         color = self.player1_color if player == 1 else self.player2_color
         
-        # Player title
-        player_name = "White Player" if player == 1 else "Black Player"
-        cv2.putText(self.ui_canvas, player_name, (x + 10, y + 30),
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2, cv2.LINE_AA)
+        # Start display from the y position (player name is shown separately above board)
+        # Add some space between name and moves section
+        moves_start_y = y + 20  # Added extra space
         
         # Move count
         move_count = move_counts["white"] if player == 1 else move_counts["black"]
         count_text = f"Moves: {move_count}"
-        cv2.putText(self.ui_canvas, count_text, (x + 10, y + 60),
+        cv2.putText(self.ui_canvas, count_text, (x + 10, moves_start_y),
                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, self.text_color, 1, cv2.LINE_AA)
         
-        # Display history - starts with just title, fills as moves are made
-        for i, line in enumerate(history_lines[:12]):  # Show up to 12 lines
-            line_y = y + 90 + (i * 20)
+        # Display history - starts from line 2 since first line is player name (shown separately)
+        display_lines = history_lines[1:] if len(history_lines) > 1 else []
+        for i, line in enumerate(display_lines[:12]):  # Show up to 12 lines
+            line_y = moves_start_y + 30 + (i * 20)  # Updated to use moves_start_y
             try:
                 cv2.putText(self.ui_canvas, line, (x + 15, line_y),
                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, self.text_color, 1, cv2.LINE_AA)
@@ -214,6 +216,47 @@ class GameUI:
                 # Fallback if there's an issue with text
                 cv2.putText(self.ui_canvas, f"Move {i+1}", (x + 15, line_y),
                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, self.text_color, 1, cv2.LINE_AA)
+    
+    def _draw_large_player_names(self, board_x, board_y):
+        """Draw large player names at the sides of the board at board level."""
+        # Get player names
+        white_name = self.player_names_manager.get_white_player_name()
+        black_name = self.player_names_manager.get_black_player_name()
+        
+        # Colors for player names (BGR format)
+        white_color = (255, 255, 255)  # White
+        black_color = (0, 0, 0)        # Black
+        
+        # Font settings for large names
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        font_scale = 1.0
+        thickness = 3
+        
+        # Position names at the same level as the board
+        name_y = board_y + 30  # Same level as board top + a bit down
+        
+        # White player name (centered in left space)
+        white_text_size = cv2.getTextSize(white_name, font, font_scale, thickness)[0]
+        left_space_width = board_x - 20  # Space from left edge to board minus margin
+        white_x = (left_space_width - white_text_size[0]) // 2  # Center in left space
+        
+        # Make sure white name fits on screen
+        if white_x > 10:
+            # Draw white player name with black outline for visibility
+            cv2.putText(self.ui_canvas, white_name, (white_x + 2, name_y + 2), font, font_scale, (0, 0, 0), thickness + 1, cv2.LINE_AA)
+            cv2.putText(self.ui_canvas, white_name, (white_x, name_y), font, font_scale, white_color, thickness, cv2.LINE_AA)
+        
+        # Black player name (centered in right space)
+        black_text_size = cv2.getTextSize(black_name, font, font_scale, thickness)[0]
+        right_space_start = board_x + self.board_size + 20  # Start of right space
+        right_space_width = self.ui_width - right_space_start - 20  # Available space minus margin
+        black_x = right_space_start + (right_space_width - black_text_size[0]) // 2  # Center in right space
+        
+        # Make sure black name fits on screen
+        if black_x + black_text_size[0] < self.ui_width - 10:
+            # Draw black player name with white outline for visibility
+            cv2.putText(self.ui_canvas, black_name, (black_x + 2, name_y + 2), font, font_scale, (255, 255, 255), thickness + 1, cv2.LINE_AA)
+            cv2.putText(self.ui_canvas, black_name, (black_x, name_y), font, font_scale, black_color, thickness, cv2.LINE_AA)
     
     def _draw_player_info(self, player: int, x: int, y: int):
         """Draw player information panel."""
@@ -282,12 +325,23 @@ class GameUI:
         board_y = (self.ui_height - self.board_size) // 2  # Calculate board's top position
         board_x = (self.ui_width - self.board_size) // 2   # Calculate board's left position
         
-        # Left panel - same position
-        self._draw_player_info_with_history(1, 20, board_y)   # Player 1 - left side, aligned with board top
+        # Draw large player names at the sides of the board
+        self._draw_large_player_names(board_x, board_y)
         
-        # Right panel - closer to the board
-        right_panel_x = board_x + self.board_size + 20  # 20px gap from board edge
-        self._draw_player_info_with_history(2, right_panel_x, board_y)  # Player 2 - right side, closer to board
+        # Calculate equal spacing for panels
+        # Left panel - centered in the space between left edge and board
+        left_panel_width = board_x - 40  # Leave 20px margin on each side
+        left_panel_x = (board_x - left_panel_width) // 2
+        
+        # Right panel - centered in the space between board and right edge
+        right_space_width = self.ui_width - (board_x + self.board_size) - 40  # Leave 20px margin on each side
+        right_panel_x = board_x + self.board_size + (right_space_width - 250) // 2 + 20  # 250 is approx panel width
+        
+        # Position panels below the player names
+        panel_start_y = board_y + 50  # Start panels below the player names
+        self._draw_player_info_with_history(1, left_panel_x, panel_start_y)   # Player 1 - left side, centered
+        self._draw_player_info_with_history(2, right_panel_x, panel_start_y)  # Player 2 - right side, centered
+        self._draw_player_info_with_history(2, right_panel_x, panel_start_y)  # Player 2 - right side
         
         # Title removed as requested
     

@@ -1,6 +1,7 @@
 from typing import Dict, List, Optional
 from CommandHistoryManager import CommandHistoryManager
 from ScoreManager import ScoreManager
+from PlayerNamesManager import PlayerNamesManager
 from MessageBroker import MessageBroker
 from EventType import EventType
 from Command import Command
@@ -11,12 +12,13 @@ class GameHistoryDisplay:
     Manages two CommandHistoryManager instances and displays information in UI.
     """
     
-    def __init__(self, broker: MessageBroker):
+    def __init__(self, broker: MessageBroker, player_names_manager: PlayerNamesManager = None):
         """
         Initialize display manager.
         
         Args:
             broker: MessageBroker for receiving events
+            player_names_manager: Manager for player names (optional)
         """
         self.broker = broker
         
@@ -26,6 +28,9 @@ class GameHistoryDisplay:
         
         # Create score manager
         self.score_manager = ScoreManager(broker)
+        
+        # Create or use provided player names manager
+        self.player_names_manager = player_names_manager if player_names_manager else PlayerNamesManager()
         
         # Display positions in interface (in pixels) - moved higher up
         self.white_display_area = {
@@ -72,14 +77,15 @@ class GameHistoryDisplay:
         """
         if player_color == "W":
             history = self.white_history.get_formatted_history()
-            title = "White Player"
+            title = self.player_names_manager.get_white_player_name()
             score = self.score_manager.get_white_score()
         else:
             history = self.black_history.get_formatted_history()
-            title = "Black Player"
+            title = self.player_names_manager.get_black_player_name()
             score = self.score_manager.get_black_score()
         
-        lines = [f"{title} Moves:"]
+        # Just the player name without "Moves:"
+        lines = [title]
         
         if not history:
             # Return title and score when no moves yet
@@ -137,6 +143,26 @@ class GameHistoryDisplay:
         """
         return self.score_manager.get_scores()
     
+    def set_player_names(self, white_name: str, black_name: str):
+        """
+        Set player names.
+        
+        Args:
+            white_name: Name for white player
+            black_name: Name for black player
+        """
+        self.player_names_manager.set_player_names(white_name, black_name)
+    
+    def get_player_names(self) -> tuple[str, str]:
+        """
+        Get player names.
+        
+        Returns:
+            tuple containing (white_player_name, black_player_name)
+        """
+        return (self.player_names_manager.get_white_player_name(),
+                self.player_names_manager.get_black_player_name())
+    
     def clear_all_history(self):
         """
         Clear all history for both players and reset scores.
@@ -154,12 +180,14 @@ class GameHistoryDisplay:
         print("="*60)
         
         scores = self.get_scores()
-        print(f"\nScores: White {scores['white']} - {scores['black']} Black")
+        white_name = self.player_names_manager.get_white_player_name()
+        black_name = self.player_names_manager.get_black_player_name()
+        print(f"\nScores: {white_name} {scores['white']} - {scores['black']} {black_name}")
         
         print("\n" + self.white_history.get_history_as_table())
         print("\n" + self.black_history.get_history_as_table())
         
         counts = self.get_move_counts()
-        print(f"\nSummary: White player - {counts['white']} moves ({scores['white']} points)")
-        print(f"         Black player - {counts['black']} moves ({scores['black']} points)")
+        print(f"\nSummary: {white_name} - {counts['white']} moves ({scores['white']} points)")
+        print(f"         {black_name} - {counts['black']} moves ({scores['black']} points)")
         print("="*60)

@@ -7,7 +7,6 @@ import pathlib
 from Game import Game
 from GameUI import GameUI
 from GameHistoryDisplay import GameHistoryDisplay
-from PlayerNamesManager import PlayerNamesManager
 from MessageBroker import MessageBroker
 from Board import Board
 from Piece import Piece
@@ -92,9 +91,8 @@ def test_history_system():
     # Display move counts and scores
     counts = history_display.get_move_counts()
     scores = history_display.get_scores()
-    white_name, black_name = history_display.get_player_names()
-    print(f"\nSummary: {white_name} - {counts['white']} moves, {scores['white']} points")
-    print(f"         {black_name} - {counts['black']} moves, {scores['black']} points")
+    print(f"\nSummary: White player - {counts['white']} moves, {scores['white']} points")
+    print(f"         Black player - {counts['black']} moves, {scores['black']} points")
     
     # Display full table
     history_display.print_full_history()

@@ -5,6 +5,7 @@ from Game import Game
 from GraphicsFactory import GraphicsFactory
 from GameUI import GameUI
 from GameHistoryDisplay import GameHistoryDisplay
+from PlayerNamesManager import PlayerNamesManager
 from MessageBroker import MessageBroker
 
 CELL_PX = 64
@@ -27,7 +28,7 @@ def create_game(pieces_root: str | pathlib.Path, img_factory) -> Game:
     return game
 
 
-def create_game_with_history(pieces_root: str | pathlib.Path, img_factory) -> tuple:
+def create_game_with_history(pieces_root: str | pathlib.Path, img_factory, player_names_manager: PlayerNamesManager = None) -> tuple:
     """Build a *Game* from the on-disk asset hierarchy rooted at *pieces_root*.
 
     This reads *board.csv* located inside *pieces_root*, creates a blank board
@@ -68,8 +69,12 @@ def create_game_with_history(pieces_root: str | pathlib.Path, img_factory) -> tu
     # Create the game with history management system
     broker = MessageBroker()
     
-    # Create UI with broker
-    ui = GameUI(None, pieces_root, broker)  # Pass None for game temporarily
+    # Create or use provided player names manager
+    if not player_names_manager:
+        player_names_manager = PlayerNamesManager()
+    
+    # Create UI with broker and player names manager
+    ui = GameUI(None, pieces_root, broker, player_names_manager)  # Pass None for game temporarily
     
     # Create game with broker and UI
     game = Game(pieces, board, broker, ui)
