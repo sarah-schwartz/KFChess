@@ -5,8 +5,8 @@ from Game import Game
 from GraphicsFactory import GraphicsFactory
 from GameUI import GameUI
 from GameHistoryDisplay import GameHistoryDisplay
-from PlayerNamesManager import PlayerNamesManager
 from MessageBroker import MessageBroker
+from PlayerNamesManager import PlayerNamesManager
 
 CELL_PX = 64
 
@@ -28,7 +28,7 @@ def create_game(pieces_root: str | pathlib.Path, img_factory) -> Game:
     return game
 
 
-def create_game_with_history(pieces_root: str | pathlib.Path, img_factory, player_names_manager: PlayerNamesManager = None) -> tuple:
+def create_game_with_history(pieces_root: str | pathlib.Path, img_factory) -> tuple:
     """Build a *Game* from the on-disk asset hierarchy rooted at *pieces_root*.
 
     This reads *board.csv* located inside *pieces_root*, creates a blank board
@@ -69,12 +69,14 @@ def create_game_with_history(pieces_root: str | pathlib.Path, img_factory, playe
     # Create the game with history management system
     broker = MessageBroker()
     
-    # Create or use provided player names manager
-    if not player_names_manager:
-        player_names_manager = PlayerNamesManager()
+    # Get player names from user before creating the game
+    print("Welcome to KFC Chess!")
+    player_names_manager = PlayerNamesManager()
+    white_name, black_name = player_names_manager.get_player_names_from_gui()
+    print(f"Starting game: {white_name} (White) vs {black_name} (Black)")
     
-    # Create UI with broker and player names manager
-    ui = GameUI(None, pieces_root, broker, player_names_manager)  # Pass None for game temporarily
+    # Create UI with broker and player names
+    ui = GameUI(None, pieces_root, broker, player_names_manager)  # Pass the names manager
     
     # Create game with broker and UI
     game = Game(pieces, board, broker, ui)
@@ -86,24 +88,3 @@ def create_game_with_history(pieces_root: str | pathlib.Path, img_factory, playe
     history_display = ui.history_display
     
     return game, ui, history_display, broker 
-
-
-def create_game_with_mock_names(pieces_root: str | pathlib.Path, img_factory, white_name: str = "TestWhite", black_name: str = "TestBlack") -> tuple:
-    """
-    Create a game with mock player names for testing purposes.
-    This avoids any GUI input dialogs during testing.
-    
-    Args:
-        pieces_root: Path to the pieces directory
-        img_factory: Image factory for loading graphics
-        white_name: Mock name for white player
-        black_name: Mock name for black player
-        
-    Returns:
-        tuple: (game, ui, history_display, broker)
-    """
-    # Create a player names manager with mock names
-    player_names_manager = PlayerNamesManager()
-    player_names_manager.set_mock_names_for_testing(white_name, black_name)
-    
-    return create_game_with_history(pieces_root, img_factory, player_names_manager)
