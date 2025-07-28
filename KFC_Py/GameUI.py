@@ -7,6 +7,7 @@ from Game import Game
 from GameHistoryDisplay import GameHistoryDisplay
 from PlayerNamesManager import PlayerNamesManager
 from MessageBroker import MessageBroker
+from MessageDisplay import MessageDisplay
 import logging
 
 logger = logging.getLogger(__name__)
@@ -23,9 +24,12 @@ class GameUI:
         self.pieces_folder = pieces_folder
         self.broker = broker
         
-        # יצירת מנהל תצוגת ההיסטוריה עם מנהל השמות
+        # Create history display manager with names manager
         self.player_names_manager = player_names_manager if player_names_manager else PlayerNamesManager()
         self.history_display = GameHistoryDisplay(broker, self.player_names_manager)
+        
+        # Create message display system
+        self.message_display = MessageDisplay(broker, screen_width=1200, screen_height=800)
         
         self.background_img = None
         self.ui_width = 1200  # Total UI width
@@ -344,6 +348,66 @@ class GameUI:
         self._draw_player_info_with_history(2, right_panel_x, panel_start_y)  # Player 2 - right side
         
         # Title removed as requested
+        
+        # Render game messages (start/end messages) on top of everything
+        self._render_game_messages()
+    
+    def _render_game_messages(self):
+        """Render game start/end messages overlaid on the UI."""
+        # Update message display state
+        self.message_display.update()
+        
+        current_message = self.message_display.get_current_message()
+        if current_message:
+            alpha = self.message_display.get_message_alpha()
+            if alpha > 0.0:
+                self._draw_message_overlay(current_message, alpha)
+    
+    def _draw_message_overlay(self, message: str, alpha: float):
+        """Draw a message overlay with transparency effect."""
+        import numpy as np
+        
+        # Create overlay
+        overlay = self.ui_canvas.copy()
+        
+        # Message styling
+        font = cv2.FONT_HERSHEY_DUPLEX
+        font_scale = 2.0
+        thickness = 3
+        
+        # Get text size
+        (text_width, text_height), baseline = cv2.getTextSize(message, font, font_scale, thickness)
+        
+        # Center the message
+        text_x = (self.ui_width - text_width) // 2
+        text_y = (self.ui_height + text_height) // 2
+        
+        # Create background rectangle
+        padding = 40
+        bg_x1 = text_x - padding
+        bg_y1 = text_y - text_height - padding
+        bg_x2 = text_x + text_width + padding
+        bg_y2 = text_y + baseline + padding
+        
+        # Draw semi-transparent background
+        cv2.rectangle(overlay, (bg_x1, bg_y1), (bg_x2, bg_y2), (0, 0, 0), -1)
+        
+        # Draw border
+        cv2.rectangle(overlay, (bg_x1, bg_y1), (bg_x2, bg_y2), (255, 255, 255), 2)
+        
+        # Draw text with glow effect (multiple layers)
+        # Glow layers
+        for offset in [(2, 2), (-2, -2), (2, -2), (-2, 2)]:
+            cv2.putText(overlay, message, (text_x + offset[0], text_y + offset[1]),
+                       font, font_scale, (50, 50, 50), thickness + 2, cv2.LINE_AA)
+        
+        # Main text
+        cv2.putText(overlay, message, (text_x, text_y),
+                   font, font_scale, (255, 255, 255), thickness, cv2.LINE_AA)
+        
+        # Blend overlay with original canvas using alpha
+        alpha_int = int(alpha * 255)
+        cv2.addWeighted(overlay, alpha, self.ui_canvas, 1 - alpha, 0, self.ui_canvas)
     
     def show(self):
         """Display the complete UI."""

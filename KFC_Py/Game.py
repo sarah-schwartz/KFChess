@@ -126,6 +126,13 @@ class Game:
                     return
 
     def run(self, num_iterations=None, is_with_graphics=True):
+        # Publish game start event
+        self.event_publisher.send(EventType.GAME_START, {
+            "timestamp": self.game_time_ms(),
+            "player_count": 2,
+            "board_size": (self.board.H_cells, self.board.W_cells)
+        })
+        
         self.start_user_input_thread()
         start_ms = self.START_NS
         for p in self.pieces:
@@ -309,8 +316,53 @@ class Game:
 
     def _is_win(self) -> bool:
         kings = [p for p in self.pieces if p.id.startswith(('KW', 'KB'))]
-        return len(kings) < 2
+        has_win_condition = len(kings) < 2
+        
+        # Only declare victory if there's a win condition AND no pieces are actively moving/capturing
+        if has_win_condition:
+            # Check if no pieces are in active movement states (move, jump)
+            # Allow pieces in other states like 'idle', 'short_rest', 'long_rest', etc.
+            no_pieces_moving = all(p.state.name not in ['move', 'jump'] for p in self.pieces)
+            
+            if no_pieces_moving:
+                print(f"DEBUG: Victory condition met - {len(kings)} kings remaining, no pieces moving")
+                for p in self.pieces:
+                    print(f"DEBUG: Piece {p.id} is in state {p.state.name}")
+                return True
+            else:
+                # Wait for moving pieces to finish their movements
+                moving_pieces = [p for p in self.pieces if p.state.name in ['move', 'jump']]
+                print(f"DEBUG: Waiting for {len(moving_pieces)} pieces to finish moving: {[p.id for p in moving_pieces]}")
+                return False
+        
+        return False
 
     def _announce_win(self):
-        text = 'Black wins!' if any(p.id.startswith('KB') for p in self.pieces) else 'White wins!'
+        # Determine winner
+        winner_color = 'Black' if any(p.id.startswith('KB') for p in self.pieces) else 'White'
+        winner_piece = next((p for p in self.pieces if p.id.startswith('K')), None)
+        winner_id = winner_piece.id if winner_piece else 'Unknown'
+        
+        text = f'{winner_color} wins!'
         logger.info(text)
+        
+        # Publish game end event with winner information
+        self.event_publisher.send(EventType.GAME_END, {
+            "winner": winner_id,
+            "winner_color": winner_color,
+            "timestamp": self.game_time_ms(),
+            "total_pieces_remaining": len(self.pieces)
+        })
+        
+        # Give time for the victory message to display before the game closes
+        # Show the final game state with the victory message
+        if self.ui:
+            # Display the final state with the victory message for a few seconds
+            end_time = time.time() + 5.0  # Show for 5 seconds
+            while time.time() < end_time:
+                # Keep updating the display to show the victory message
+                self._draw()
+                self._show()
+                if hasattr(self.ui, 'message_display'):
+                    self.ui.message_display.update()
+                time.sleep(0.1)  # Small delay to avoid consuming too much CPU
