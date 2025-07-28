@@ -116,7 +116,7 @@ class TestSoundSystemIntegration(unittest.TestCase):
     def test_sound_manager_created_during_game_creation(self):
         """Test that SoundManager is created and integrated during game creation."""
         # Create game with sound system
-        game, ui, history_display, broker, sound_manager = create_game_with_history(
+        game, ui, history_display, broker, sound_manager, message_display = create_game_with_history(
             self.pieces_root, MockImgFactory()
         )
         
@@ -138,7 +138,7 @@ class TestSoundSystemIntegration(unittest.TestCase):
     def test_sound_system_handles_game_events(self):
         """Test that sound system responds to actual game events."""
         # Create game with sound system
-        game, ui, history_display, broker, sound_manager = create_game_with_history(
+        game, ui, history_display, broker, sound_manager, message_display = create_game_with_history(
             self.pieces_root, MockImgFactory()
         )
         
@@ -175,7 +175,7 @@ class TestSoundSystemIntegration(unittest.TestCase):
         mock_sound.side_effect = Exception("File not found")
         
         # Should not crash even with missing sound files
-        game, ui, history_display, broker, sound_manager = create_game_with_history(
+        game, ui, history_display, broker, sound_manager, message_display = create_game_with_history(
             self.pieces_root, MockImgFactory()
         )
         

@@ -22,7 +22,9 @@ class TestVictoryTiming(unittest.TestCase):
     
     def setUp(self):
         """Set up test environment."""
-        self.board = Board(8, 8, 64, 64)
+        from mock_img import MockImg
+        mock_img = MockImg()  # MockImg doesn't take parameters
+        self.board = Board(8, 8, 64, 64, mock_img)
         self.broker = MessageBroker()
         
         # Create minimal pieces with kings
@@ -176,7 +178,9 @@ class TestVictoryMessageIntegration(unittest.TestCase):
     
     def setUp(self):
         """Set up test environment."""
-        self.board = Board(8, 8, 64, 64)
+        from mock_img import MockImg
+        mock_img = MockImg()  # MockImg doesn't take parameters
+        self.board = Board(8, 8, 64, 64, mock_img)
         self.broker = MessageBroker()
         self.message_display = MessageDisplay(self.broker)
         

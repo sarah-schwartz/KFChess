@@ -26,7 +26,7 @@ def create_game(pieces_root: str | pathlib.Path, img_factory) -> Game:
     Returns:
         Game: The game instance
     """
-    game, ui, history_display, broker, sound_manager = create_game_with_history(pieces_root, img_factory)
+    game, ui, history_display, broker, sound_manager, message_display = create_game_with_history(pieces_root, img_factory)
     return game
 
 
