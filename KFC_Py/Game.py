@@ -358,7 +358,14 @@ class Game:
         # Show the final game state with the victory message until it disappears
         if self.ui:
             # Display the final state with the victory message until the message is gone
+            max_display_time = 5.0  # Maximum time to show victory message
+            start_time = time.time()
+            
             while True:
+                # Check for timeout to prevent infinite loops in tests
+                if time.time() - start_time > max_display_time:
+                    break
+                    
                 # Keep updating the display to show the victory message
                 self._draw()
                 self._show()
