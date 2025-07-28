@@ -86,3 +86,24 @@ def create_game_with_history(pieces_root: str | pathlib.Path, img_factory, playe
     history_display = ui.history_display
     
     return game, ui, history_display, broker 
+
+
+def create_game_with_mock_names(pieces_root: str | pathlib.Path, img_factory, white_name: str = "TestWhite", black_name: str = "TestBlack") -> tuple:
+    """
+    Create a game with mock player names for testing purposes.
+    This avoids any GUI input dialogs during testing.
+    
+    Args:
+        pieces_root: Path to the pieces directory
+        img_factory: Image factory for loading graphics
+        white_name: Mock name for white player
+        black_name: Mock name for black player
+        
+    Returns:
+        tuple: (game, ui, history_display, broker)
+    """
+    # Create a player names manager with mock names
+    player_names_manager = PlayerNamesManager()
+    player_names_manager.set_mock_names_for_testing(white_name, black_name)
+    
+    return create_game_with_history(pieces_root, img_factory, player_names_manager)

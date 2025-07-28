@@ -266,3 +266,14 @@ class PlayerNamesManager:
             return self.black_player_name
         else:
             return f"Player {color}"
+    
+    def set_mock_names_for_testing(self, white_name: str = "MockWhite", black_name: str = "MockBlack"):
+        """
+        Set mock names for testing purposes (no user input required).
+        
+        Args:
+            white_name: Mock name for white player
+            black_name: Mock name for black player
+        """
+        self.white_player_name = white_name
+        self.black_player_name = black_name
