@@ -7,6 +7,7 @@ from GameUI import GameUI
 from GameHistoryDisplay import GameHistoryDisplay
 from MessageBroker import MessageBroker
 from PlayerNamesManager import PlayerNamesManager
+from SoundManager import SoundManager
 
 CELL_PX = 64
 
@@ -24,7 +25,7 @@ def create_game(pieces_root: str | pathlib.Path, img_factory) -> Game:
     Returns:
         Game: The game instance
     """
-    game, ui, history_display, broker = create_game_with_history(pieces_root, img_factory)
+    game, ui, history_display, broker, sound_manager = create_game_with_history(pieces_root, img_factory)
     return game
 
 
@@ -33,10 +34,10 @@ def create_game_with_history(pieces_root: str | pathlib.Path, img_factory) -> tu
 
     This reads *board.csv* located inside *pieces_root*, creates a blank board
     (or loads board.png if present), instantiates every piece via PieceFactory
-    and returns a ready-to-run *Game* instance with history management.
+    and returns a ready-to-run *Game* instance with history management and sound effects.
     
     Returns:
-        tuple: (game, ui, history_display, broker)
+        tuple: (game, ui, history_display, broker, sound_manager)
     """
     pieces_root = pathlib.Path(pieces_root)
     board_csv = pieces_root / "board.csv"
@@ -69,6 +70,10 @@ def create_game_with_history(pieces_root: str | pathlib.Path, img_factory) -> tu
     # Create the game with history management system
     broker = MessageBroker()
     
+    # Create sound manager with sounds from pieces/sound folder
+    sounds_folder = pieces_root / "sound"
+    sound_manager = SoundManager(broker, sounds_folder)
+    
     # Get player names from user before creating the game
     print("Welcome to KFC Chess!")
     player_names_manager = PlayerNamesManager()
@@ -87,4 +92,4 @@ def create_game_with_history(pieces_root: str | pathlib.Path, img_factory) -> tu
     # Get history display from UI
     history_display = ui.history_display
     
-    return game, ui, history_display, broker 
+    return game, ui, history_display, broker, sound_manager 
