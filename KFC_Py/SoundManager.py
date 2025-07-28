@@ -37,6 +37,8 @@ class SoundManager(Subscriber):
         self.broker.subscribe(EventType.PIECE_MOVED, self)
         self.broker.subscribe(EventType.PIECE_CAPTURED, self)
         self.broker.subscribe(EventType.INVALID_MOVE, self)
+        self.broker.subscribe(EventType.GAME_START, self)
+        self.broker.subscribe(EventType.GAME_END, self)
     
     def _load_sounds(self):
         """Load all sound files from the sounds folder."""
@@ -44,6 +46,8 @@ class SoundManager(Subscriber):
             move_path = self.sounds_folder / "move.wav"
             capture_path = self.sounds_folder / "capture.wav"
             fail_path = self.sounds_folder / "fail.mp3"
+            gamestart_path = self.sounds_folder / "gamestart.mp3"
+            gameend_path = self.sounds_folder / "gameend.mp3"
             
             if move_path.exists():
                 self.sounds["move"] = pygame.mixer.Sound(str(move_path))
@@ -63,6 +67,18 @@ class SoundManager(Subscriber):
             else:
                 print(f"WARNING: Fail sound file not found at {fail_path}")
                 
+            if gamestart_path.exists():
+                self.sounds["gamestart"] = pygame.mixer.Sound(str(gamestart_path))
+                print(f"DEBUG: Loaded game start sound from {gamestart_path}")
+            else:
+                print(f"WARNING: Game start sound file not found at {gamestart_path}")
+                
+            if gameend_path.exists():
+                self.sounds["gameend"] = pygame.mixer.Sound(str(gameend_path))
+                print(f"DEBUG: Loaded game end sound from {gameend_path}")
+            else:
+                print(f"WARNING: Game end sound file not found at {gameend_path}")
+                
         except Exception as e:
             print(f"ERROR: Failed to load sounds: {e}")
     
@@ -81,6 +97,10 @@ class SoundManager(Subscriber):
                 self._play_capture_sound()
             elif event_type == EventType.INVALID_MOVE:
                 self._play_fail_sound()
+            elif event_type == EventType.GAME_START:
+                self._play_gamestart_sound()
+            elif event_type == EventType.GAME_END:
+                self._play_gameend_sound()
         except Exception as e:
             print(f"ERROR: Failed to handle sound event {event_type}: {e}")
     
@@ -107,6 +127,22 @@ class SoundManager(Subscriber):
             print("DEBUG: Played fail sound")
         else:
             print("WARNING: Fail sound not available")
+    
+    def _play_gamestart_sound(self):
+        """Play the game start sound effect."""
+        if "gamestart" in self.sounds:
+            self.sounds["gamestart"].play()
+            print("DEBUG: Played game start sound")
+        else:
+            print("WARNING: Game start sound not available")
+    
+    def _play_gameend_sound(self):
+        """Play the game end sound effect."""
+        if "gameend" in self.sounds:
+            self.sounds["gameend"].play()
+            print("DEBUG: Played game end sound")
+        else:
+            print("WARNING: Game end sound not available")
     
     def set_volume(self, volume: float):
         """
