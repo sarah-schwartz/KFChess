@@ -8,6 +8,7 @@ setup(
         'numpy',
         'keyboard',
         'pytest',
-        'pytest-cov'
+        'pytest-cov',
+        'pygame'
     ],
 ) 

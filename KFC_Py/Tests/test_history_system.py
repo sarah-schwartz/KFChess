@@ -6,6 +6,13 @@ Tests the functionality of command tracking and display for chess players.
 import unittest
 import sys
 import os
+from unittest.mock import patch, MagicMock
+
+# Setup global mocks before any imports
+sys.modules['pygame'] = MagicMock()
+sys.modules['pygame.mixer'] = MagicMock()
+sys.modules['pygame.mixer.Sound'] = MagicMock()
+sys.modules['cv2'] = MagicMock()
 
 # Add the parent directory to the Python path to allow module imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))

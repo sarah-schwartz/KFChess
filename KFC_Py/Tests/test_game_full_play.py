@@ -1,3 +1,17 @@
+import sys
+from unittest.mock import patch, MagicMock
+
+# Setup global mocks before any imports
+sys.modules['pygame'] = MagicMock()
+sys.modules['pygame.mixer'] = MagicMock()
+sys.modules['pygame.mixer.Sound'] = MagicMock()
+sys.modules['cv2'] = MagicMock()
+
+# Mock input functions
+patch('builtins.input', return_value='TestInput').start()
+patch('PlayerNamesManager.PlayerNamesManager.get_player_names_from_gui', 
+      return_value=('TestWhite', 'TestBlack')).start()
+
 import pathlib, time
 import logging
 

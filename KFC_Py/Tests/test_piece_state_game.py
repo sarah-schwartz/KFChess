@@ -150,10 +150,14 @@ def test_game_collision_resolution():
     # Setup pieces
     white_king = _make_piece("KW_1", (7, 4), board)
     black_king = _make_piece("KB_1", (0, 4), board)
-    pawn1 = _make_piece("PW_1", (4, 4), board)
-    pawn2 = _make_piece("PB_1", (4, 4), board)  # Same cell as pawn1
+    pawn1 = _make_piece("PW_1", (4, 3), board)  # Start at different position
+    pawn2 = _make_piece("PB_1", (4, 4), board)
     
+    # Create game first
     game = Game([white_king, black_king, pawn1, pawn2], board)
+    
+    # Then move pawn1 to same cell as pawn2 to create collision (after validation)
+    pawn1.state.reset(Command(100, pawn1.id, "idle", [(4, 4)]))  # Move to collision cell
     
     # Most recent piece wins collision
     pawn1.state.physics._start_ms = 100  # Earlier arrival

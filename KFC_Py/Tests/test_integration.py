@@ -11,11 +11,6 @@ from Graphics import Graphics
 from GraphicsFactory import MockImgFactory
 from mock_img import MockImg
 
-
-# ---------------------------------------------------------------------------
-# Helper utilities – these rely **only on production code**, no test doubles
-# ---------------------------------------------------------------------------
-
 PIECES_ROOT = pathlib.Path(__file__).parent.parent.parent / "pieces"
 BOARD_CSV   = PIECES_ROOT / "board.csv"
 SPRITES_DIR = PIECES_ROOT / "BB" / "states" / "idle" / "sprites"
@@ -84,11 +79,6 @@ def _load_pieces_and_board():
 
     game = Game(pieces, board)
     return game
-
-
-# ---------------------------------------------------------------------------
-#                               TESTS
-# ---------------------------------------------------------------------------
 
 def test_game_initialises_from_csv():
     """The game builds successfully from the shipped *board.csv*."""

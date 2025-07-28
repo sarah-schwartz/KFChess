@@ -19,7 +19,11 @@ class InvalidBoard(Exception): ...
 
 
 class Game:
-    def __init__(self, pieces: List[Piece], board: Board, broker: MessageBroker = None, ui=None):
+    def __init__(self, pieces: List[Piece], board: Board, broker: MessageBroker = None, ui=None, validate_board=True):
+        # Validate board configuration before initialization (can be disabled for tests)
+        if validate_board and not self._validate(pieces):
+            raise InvalidBoard("Invalid board configuration: missing kings or duplicate positions")
+            
         self.pieces = pieces
         self.board = board
         self.curr_board = None
@@ -283,9 +287,8 @@ class Game:
         for p in pieces:
             cell = p.current_cell()
             if cell in seen_cells:
-                # Allow overlap only if piece is from opposite side
-                if seen_cells[cell] == p.id[1]:
-                    return False
+                # No overlap allowed - any duplicate position is invalid
+                return False
             else:
                 seen_cells[cell] = p.id[1]
             if p.id.startswith("KW"):

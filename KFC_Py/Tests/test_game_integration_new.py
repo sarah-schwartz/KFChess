@@ -41,7 +41,8 @@ def test_game_creation():
     counts = history_display.get_move_counts()
     print(f"Test completed: {counts['white']} white moves, {counts['black']} black moves")
     
-    return True
+    # Using assert instead of return for pytest compatibility
+    assert counts is not None
 
 
 if __name__ == "__main__":
