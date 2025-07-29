@@ -107,7 +107,7 @@ class MessageDisplay(Subscriber):
     
     def update(self):
         """Update message display state. Call this regularly from game loop."""
-        if self.current_message and self.message_start_time:
+        if self.current_message and self.message_start_time is not None:
             elapsed = time.time() - self.message_start_time
             
             if elapsed >= self.message_duration:
@@ -123,7 +123,7 @@ class MessageDisplay(Subscriber):
         Get the alpha value for message display (for fade effects).
         Returns value between 0.0 (invisible) and 1.0 (fully visible).
         """
-        if not self.current_message or not self.message_start_time:
+        if not self.current_message or self.message_start_time is None:
             return 0.0
         
         elapsed = time.time() - self.message_start_time

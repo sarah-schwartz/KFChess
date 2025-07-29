@@ -1,0 +1,21 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run Message Tests",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"-m",
+				"pytest",
+				"Tests/test_message_system_integration.py",
+				"-v"
+			],
+			"group": "test",
+			"problemMatcher": [
+				"$pytest"
+			],
+			"isBackground": false
+		}
+	]
+}
