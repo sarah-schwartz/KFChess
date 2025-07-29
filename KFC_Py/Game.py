@@ -343,13 +343,22 @@ class Game:
         winner_piece = next((p for p in self.pieces if p.id.startswith('K')), None)
         winner_id = winner_piece.id if winner_piece else 'Unknown'
         
-        text = f'{winner_color} wins!'
+        # Get actual player name if UI is available
+        winner_player_name = winner_color  # Default fallback
+        if self.ui and hasattr(self.ui, 'player_names_manager'):
+            if winner_color == 'White':
+                winner_player_name = self.ui.player_names_manager.get_white_player_name()
+            else:
+                winner_player_name = self.ui.player_names_manager.get_black_player_name()
+        
+        text = f'{winner_player_name} wins!'
         logger.info(text)
         
         # Publish game end event with winner information
         self.event_publisher.send(EventType.GAME_END, {
             "winner": winner_id,
             "winner_color": winner_color,
+            "winner_player_name": winner_player_name,
             "timestamp": self.game_time_ms(),
             "total_pieces_remaining": len(self.pieces)
         })

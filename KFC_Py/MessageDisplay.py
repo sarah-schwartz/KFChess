@@ -7,7 +7,7 @@ from MessageBroker import MessageBroker
 
 # Message constants - easy to modify
 GAME_START_MESSAGE = "Welcome to KFC Chess!"
-GAME_END_MESSAGE_TEMPLATE = "{winner_color} Wins!"
+GAME_END_MESSAGE_TEMPLATE = "{winner_name} Wins!"
 
 class MessageDisplay(Subscriber):
     """
@@ -80,8 +80,9 @@ class MessageDisplay(Subscriber):
         """Show victory message at game end."""
         winner = data.get('winner', 'Unknown')
         winner_color = data.get('winner_color', 'Unknown')
+        winner_player_name = data.get('winner_player_name', winner_color)
         
-        message = GAME_END_MESSAGE_TEMPLATE.format(winner_color=winner_color)
+        message = GAME_END_MESSAGE_TEMPLATE.format(winner_name=winner_player_name)
         self._display_message(message, duration=4.0)
         print(f"DEBUG: Showing game end message: {message}")
     

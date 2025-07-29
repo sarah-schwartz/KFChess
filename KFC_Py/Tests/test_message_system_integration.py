@@ -18,15 +18,15 @@ class TestMessageDisplayConstants(unittest.TestCase):
     def test_constants_are_defined(self):
         """Test that message constants are properly defined."""
         self.assertEqual(GAME_START_MESSAGE, "Welcome to KFC Chess!")
-        self.assertEqual(GAME_END_MESSAGE_TEMPLATE, "{winner_color} Wins!")
+        self.assertEqual(GAME_END_MESSAGE_TEMPLATE, "{winner_name} Wins!")
     
     def test_game_end_template_formatting(self):
         """Test that game end template formats correctly."""
-        white_message = GAME_END_MESSAGE_TEMPLATE.format(winner_color="White")
-        black_message = GAME_END_MESSAGE_TEMPLATE.format(winner_color="Black")
+        white_message = GAME_END_MESSAGE_TEMPLATE.format(winner_name="John")
+        black_message = GAME_END_MESSAGE_TEMPLATE.format(winner_name="Sarah")
         
-        self.assertEqual(white_message, "White Wins!")
-        self.assertEqual(black_message, "Black Wins!")
+        self.assertEqual(white_message, "John Wins!")
+        self.assertEqual(black_message, "Sarah Wins!")
 
 
 class TestMessageDisplayIntegration(unittest.TestCase):
@@ -49,14 +49,14 @@ class TestMessageDisplayIntegration(unittest.TestCase):
     def test_game_end_message_exact_content(self):
         """Test that game end shows exact expected message."""
         # Test white victory
-        event_data = {'winner': 'KW1', 'winner_color': 'White'}
+        event_data = {'winner': 'KW1', 'winner_color': 'White', 'winner_player_name': 'John'}
         self.message_display.handle_event(EventType.GAME_END, event_data)
-        self.assertEqual(self.message_display.current_message, "White Wins!")
+        self.assertEqual(self.message_display.current_message, "John Wins!")
         
         # Test black victory
-        event_data = {'winner': 'KB1', 'winner_color': 'Black'}
+        event_data = {'winner': 'KB1', 'winner_color': 'Black', 'winner_player_name': 'Sarah'}
         self.message_display.handle_event(EventType.GAME_END, event_data)
-        self.assertEqual(self.message_display.current_message, "Black Wins!")
+        self.assertEqual(self.message_display.current_message, "Sarah Wins!")
     
     @patch('time.time')
     def test_message_timing_precision(self, mock_time):
@@ -107,11 +107,11 @@ class TestMessageDisplayIntegration(unittest.TestCase):
         self.assertEqual(self.message_display.current_message, "Welcome to KFC Chess!")
         
         # Immediately show game end message
-        event_data = {'winner': 'KB1', 'winner_color': 'Black'}
+        event_data = {'winner': 'KB1', 'winner_color': 'Black', 'winner_player_name': 'Sarah'}
         self.message_display.handle_event(EventType.GAME_END, event_data)
         
         # Should now show victory message
-        self.assertEqual(self.message_display.current_message, "Black Wins!")
+        self.assertEqual(self.message_display.current_message, "Sarah Wins!")
     
     def test_subscription_to_events(self):
         """Test that MessageDisplay is properly subscribed to events."""
@@ -284,6 +284,17 @@ class TestMessageDisplayError(unittest.TestCase):
             message_display = MessageDisplay(broker)
             # Font should be None but object should still work
             self.assertIsNotNone(message_display)
+    
+    def test_missing_winner_player_name(self):
+        """Test handling of GAME_END event with missing winner_player_name."""
+        # Send event with missing winner_player_name (should fallback to winner_color)
+        event_data = {'winner': 'KW1', 'winner_color': 'White'}
+        
+        # Should not crash and should use color as fallback
+        self.message_display.handle_event(EventType.GAME_END, event_data)
+        
+        # Should show message with color fallback
+        self.assertEqual(self.message_display.current_message, "White Wins!")
     
     def test_missing_winner_color(self):
         """Test handling of GAME_END event with missing winner_color."""

@@ -281,6 +281,7 @@ class TestVictoryMessageContent(unittest.TestCase):
         event_data = {
             'winner': 'KW1',
             'winner_color': 'White',
+            'winner_player_name': 'John',
             'timestamp': 1000,
             'total_pieces_remaining': 5
         }
@@ -290,7 +291,7 @@ class TestVictoryMessageContent(unittest.TestCase):
         
         # Check that message was set
         self.assertIsNotNone(self.message_display.current_message)
-        self.assertEqual(self.message_display.current_message, "White Wins!")
+        self.assertEqual(self.message_display.current_message, "John Wins!")
     
     def test_victory_message_content_black_wins(self):
         """Test victory message for black winner."""
@@ -298,6 +299,7 @@ class TestVictoryMessageContent(unittest.TestCase):
         event_data = {
             'winner': 'KB1',
             'winner_color': 'Black',
+            'winner_player_name': 'Sarah',
             'timestamp': 1000,
             'total_pieces_remaining': 3
         }
@@ -307,7 +309,7 @@ class TestVictoryMessageContent(unittest.TestCase):
         
         # Check that message was set
         self.assertIsNotNone(self.message_display.current_message)
-        self.assertEqual(self.message_display.current_message, "Black Wins!")
+        self.assertEqual(self.message_display.current_message, "Sarah Wins!")
     
     @patch('time.time')
     def test_victory_message_duration(self, mock_time):
@@ -318,6 +320,7 @@ class TestVictoryMessageContent(unittest.TestCase):
         event_data = {
             'winner': 'KW1',
             'winner_color': 'White',
+            'winner_player_name': 'John',
             'timestamp': 1000,
             'total_pieces_remaining': 1
         }
