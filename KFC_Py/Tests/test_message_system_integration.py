@@ -192,6 +192,21 @@ class TestMessageDisplayAlpha(unittest.TestCase):
             mock_time.return_value = test_time
             alpha = self.message_display.get_message_alpha()
             self.assertEqual(alpha, 1.0, f"Alpha should be 1.0 at time {test_time}")
+    
+    @patch('time.time')
+    def test_alpha_when_no_message(self, mock_time):
+        """Test that alpha is 0 when no message is displayed."""
+        mock_time.return_value = 0
+        
+        # No message displayed
+        alpha = self.message_display.get_message_alpha()
+        self.assertEqual(alpha, 0.0)
+        
+        # Message displayed but then cleared
+        self.message_display.handle_event(EventType.GAME_START, {})
+        self.message_display._hide_current_message()
+        alpha = self.message_display.get_message_alpha()
+        self.assertEqual(alpha, 0.0)
 
 
 class TestMessageDisplayError(unittest.TestCase):
@@ -201,6 +216,74 @@ class TestMessageDisplayError(unittest.TestCase):
         """Set up test environment."""
         self.broker = MessageBroker()
         self.message_display = MessageDisplay(self.broker)
+    
+    def test_render_method_basic(self):
+        """Test basic render functionality."""
+        # Create a mock surface
+        mock_surface = Mock()
+        
+        # Test rendering with no message
+        self.message_display.render_message(mock_surface)
+        # Should not call blit since no message
+        mock_surface.blit.assert_not_called()
+        
+        # Test rendering with a message
+        self.message_display.handle_event(EventType.GAME_START, {})
+        
+        # Mock the font rendering
+        with patch.object(self.message_display, 'font_large') as mock_font:
+            mock_text_surface = Mock()
+            mock_text_surface.get_rect.return_value = Mock(center=(400, 300))
+            mock_font.render.return_value = mock_text_surface
+            
+            self.message_display.render_message(mock_surface)
+            
+            # Should have attempted to render
+            mock_font.render.assert_called_once()
+    
+    @patch('time.time')
+    def test_render_with_zero_alpha(self, mock_time):
+        """Test rendering when alpha is 0 (message completely faded)."""
+        mock_surface = Mock()
+        
+        # Set up a message that should be completely faded (alpha = 0)
+        mock_time.return_value = 0
+        self.message_display.handle_event(EventType.GAME_START, {})
+        
+        # Set time to when message should be completely gone (after duration)
+        mock_time.return_value = 3.0  # Past the 2.5 second duration
+        
+        # Should not render anything when alpha is 0
+        self.message_display.render_message(mock_surface)
+        mock_surface.blit.assert_not_called()
+    
+    @patch('builtins.print')
+    def test_render_error_handling(self, mock_print):
+        """Test error handling during rendering."""
+        mock_surface = Mock()
+        
+        # Set up a message
+        self.message_display.handle_event(EventType.GAME_START, {})
+        
+        # Mock font to raise an exception
+        with patch.object(self.message_display, 'font_large') as mock_font:
+            mock_font.render.side_effect = Exception("Render failed")
+            
+            # Should not crash when rendering fails
+            self.message_display.render_message(mock_surface)
+            
+            # Should have logged the error
+            error_calls = [call for call in mock_print.call_args_list if 'ERROR:' in str(call)]
+            self.assertGreater(len(error_calls), 0)
+    
+    def test_font_initialization_error_handling(self):
+        """Test handling of font initialization errors."""
+        with patch('pygame.font.init', side_effect=Exception("Font init failed")):
+            # Should not crash when font initialization fails
+            broker = MessageBroker()
+            message_display = MessageDisplay(broker)
+            # Font should be None but object should still work
+            self.assertIsNotNone(message_display)
     
     def test_missing_winner_color(self):
         """Test handling of GAME_END event with missing winner_color."""
