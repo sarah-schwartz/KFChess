@@ -193,6 +193,10 @@ class GameUI:
         # Determine player color for MessageBroker
         player_color = "W" if player == 1 else "B"
         
+        # Start display from the y position (player name is shown separately above board)
+        # Add some space between name and moves section
+        moves_start_y = y + 20  # Added extra space
+        
         # Get history data with available height calculation
         # Calculate available height for move display
         ui_height = self.ui_canvas.shape[0]  # Total UI height
@@ -203,10 +207,6 @@ class GameUI:
         move_counts = self.history_display.get_move_counts()
         
         color = self.player1_color if player == 1 else self.player2_color
-        
-        # Start display from the y position (player name is shown separately above board)
-        # Add some space between name and moves section
-        moves_start_y = y + 20  # Added extra space
         
         # Move count
         move_count = move_counts["white"] if player == 1 else move_counts["black"]
