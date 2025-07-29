@@ -48,7 +48,7 @@ class Game:
         # UI instance for rendering
         self.ui = ui
         
-        # הוספת תמיכה בממשק המשתמש החדש
+        # Support for new user interface
         self.ui = ui
 
     def game_time_ms(self) -> int:
@@ -173,11 +173,11 @@ class Game:
 
     def _show(self):
         if self.ui:
-            # שימוש בממשק המשתמש החדש
+            # Use new user interface
             self.ui.render_complete_ui(self.curr_board)
             self.ui.show()
         else:
-            # fallback לממשק הישן
+            # Fallback to old interface
             self.curr_board.show()
 
     def _side_of(self, piece_id: str) -> str:

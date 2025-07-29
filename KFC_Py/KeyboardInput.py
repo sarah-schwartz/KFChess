@@ -27,12 +27,12 @@ class KeyboardProcessor:
         
         # Translate Hebrew keys to English
         hebrew_to_english = {
-            'ש': 'a',  # ש = a
-            'ד': 's',  # ד = s  
-            'ג': 'd',  # ו = d
-            '\'': 'w',  # ' = w
-            'כ': 'f',  # כ = f
-            'ע': 'g',  # ג = g
+            'ש': 'a',  # Hebrew shin = a
+            'ד': 's',  # Hebrew dalet = s  
+            'ג': 'd',  # Hebrew gimel = d
+            '\'': 'w',  # Hebrew geresh = w
+            'כ': 'f',  # Hebrew kaf = f
+            'ע': 'g',  # Hebrew ayin = g
         }
         
         # Convert Hebrew key to English

@@ -11,12 +11,12 @@ class ScoreManager(Subscriber):
     
     # Point values for different pieces
     PIECE_VALUES = {
-        "P": 1,  # Pawn (חייל)
-        "N": 3,  # Knight (פרש) 
-        "B": 3,  # Bishop (רץ)
-        "R": 5,  # Rook (צריח)
-        "Q": 9,  # Queen (מלכה)
-        "K": 0   # King (מלך) - typically not captured in regular play
+        "P": 1,  # Pawn
+        "N": 3,  # Knight 
+        "B": 3,  # Bishop
+        "R": 5,  # Rook
+        "Q": 9,  # Queen
+        "K": 0   # King - typically not captured in regular play
     }
     
     def __init__(self, broker: MessageBroker):

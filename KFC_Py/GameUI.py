@@ -307,17 +307,17 @@ class GameUI:
         color = self.player1_color if player == 1 else self.player2_color
         
         # Player title
-        title = f"שחקן {player}"
+        title = f"Player {player}"
         cv2.putText(self.ui_canvas, title, (x + 10, y + 30),
                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2, cv2.LINE_AA)
         
         # Score
-        score_text = f"ניקוד: {score}"
+        score_text = f"Score: {score}"
         cv2.putText(self.ui_canvas, score_text, (x + 10, y + 60),
                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, self.text_color, 1, cv2.LINE_AA)
         
         # Moves header
-        moves_header = "מהלכים אחרונים:"
+        moves_header = "Recent moves:"
         cv2.putText(self.ui_canvas, moves_header, (x + 10, y + 90),
                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, self.text_color, 1, cv2.LINE_AA)
         
