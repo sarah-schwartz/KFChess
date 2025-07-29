@@ -198,10 +198,17 @@ class GameUI:
         moves_start_y = y + 20  # Added extra space
         
         # Get history data with available height calculation
-        # Calculate available height for move display
-        ui_height = self.ui_canvas.shape[0]  # Total UI height
+        # Calculate the actual available height based on the real panel position
+        ui_height = self.ui_canvas.shape[0]  # Total UI height (800)
         moves_section_start = moves_start_y + 30  # Where moves actually start
-        available_height = ui_height - moves_section_start - 50  # Reserve space at bottom
+        
+        # Calculate realistic available height from the current position to bottom of screen
+        # Leave some margin at the bottom for the score line
+        available_height = ui_height - moves_section_start - 80  # Reserve 80px for score and margin
+        
+        # Make sure we have at least some reasonable space
+        if available_height < 100:
+            available_height = 200  # Minimum reasonable height
         
         history_lines = self.history_display.get_formatted_display_text(player_color, available_height)
         move_counts = self.history_display.get_move_counts()
@@ -219,12 +226,22 @@ class GameUI:
         
         # Calculate maximum lines that can fit dynamically
         line_height = 20
-        max_display_lines = max(1, available_height // line_height)
+        # Reserve space for the move count line and ensure score line is always visible
+        max_display_lines = max(1, (available_height // line_height) - 1)  # -1 for moves count line
         
-        for i, line in enumerate(display_lines[:max_display_lines]):
+        # Always keep the score line if it exists (it's usually the last line)
+        score_line = None
+        if display_lines and display_lines[-1].startswith("Score:"):
+            score_line = display_lines[-1]
+            display_lines = display_lines[:-1]  # Remove score from display_lines temporarily
+        
+        # Display the moves, but leave room for the score
+        lines_to_show = min(len(display_lines), max_display_lines - (1 if score_line else 0))
+        
+        for i, line in enumerate(display_lines[:lines_to_show]):
             line_y = moves_start_y + 30 + (i * line_height)
             # Make sure we don't draw beyond the screen
-            if line_y > ui_height - 30:
+            if line_y > self.ui_height - 60:  # Leave more space at bottom for score
                 break
             try:
                 cv2.putText(self.ui_canvas, line, (x + 15, line_y),
@@ -233,6 +250,14 @@ class GameUI:
                 # Fallback if there's an issue with text
                 cv2.putText(self.ui_canvas, f"Move {i+1}", (x + 15, line_y),
                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, self.text_color, 1, cv2.LINE_AA)
+        
+        # Always display the score line at the bottom if it exists
+        if score_line:
+            score_y = moves_start_y + 30 + (lines_to_show * line_height) + 10  # Add some spacing
+            # Make sure score doesn't go off screen
+            if score_y < self.ui_height - 30:
+                cv2.putText(self.ui_canvas, score_line, (x + 15, score_y),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1, cv2.LINE_AA)  # Yellow color for score
     
     def _draw_large_player_names(self, board_x, board_y):
         """Draw large player names at the sides of the board at board level."""

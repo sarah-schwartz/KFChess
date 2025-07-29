@@ -94,9 +94,9 @@ class GameHistoryDisplay:
             return lines
         
         # Calculate how many moves can fit in the display area dynamically
-        # Assume each line takes about 25 pixels, and we need space for title and score (2 lines)
-        lines_per_pixel = 25
-        reserved_lines = 2  # title and score
+        # Assume each line takes about 20 pixels (matching GameUI.py), and we need space for title and score (2 lines)
+        lines_per_pixel = 20  # Match the line_height in GameUI.py
+        reserved_lines = 3  # title, score, and some margin - increased from 2 to 3
         max_lines_for_moves = max(1, (available_height // lines_per_pixel) - reserved_lines)
         
         # Show recent moves (dynamic based on available space)
