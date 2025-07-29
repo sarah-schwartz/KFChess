@@ -193,8 +193,13 @@ class GameUI:
         # Determine player color for MessageBroker
         player_color = "W" if player == 1 else "B"
         
-        # Get history data
-        history_lines = self.history_display.get_formatted_display_text(player_color)
+        # Get history data with available height calculation
+        # Calculate available height for move display
+        ui_height = self.ui_canvas.shape[0]  # Total UI height
+        moves_section_start = moves_start_y + 30  # Where moves actually start
+        available_height = ui_height - moves_section_start - 50  # Reserve space at bottom
+        
+        history_lines = self.history_display.get_formatted_display_text(player_color, available_height)
         move_counts = self.history_display.get_move_counts()
         
         color = self.player1_color if player == 1 else self.player2_color
@@ -211,8 +216,16 @@ class GameUI:
         
         # Display history - starts from line 2 since first line is player name (shown separately)
         display_lines = history_lines[1:] if len(history_lines) > 1 else []
-        for i, line in enumerate(display_lines[:12]):  # Show up to 12 lines
-            line_y = moves_start_y + 30 + (i * 20)  # Updated to use moves_start_y
+        
+        # Calculate maximum lines that can fit dynamically
+        line_height = 20
+        max_display_lines = max(1, available_height // line_height)
+        
+        for i, line in enumerate(display_lines[:max_display_lines]):
+            line_y = moves_start_y + 30 + (i * line_height)
+            # Make sure we don't draw beyond the screen
+            if line_y > ui_height - 30:
+                break
             try:
                 cv2.putText(self.ui_canvas, line, (x + 15, line_y),
                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, self.text_color, 1, cv2.LINE_AA)
@@ -283,12 +296,22 @@ class GameUI:
         cv2.putText(self.ui_canvas, moves_header, (x + 10, y + 90),
                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, self.text_color, 1, cv2.LINE_AA)
         
-        # List recent moves
-        for i, move in enumerate(moves[-8:]):  # Show last 8 moves
-            move_y = y + 120 + (i * 25)
-            move_text = f"{len(moves) - 8 + i + 1}. {move}"
-            cv2.putText(self.ui_canvas, move_text, (x + 15, move_y),
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.4, self.text_color, 1, cv2.LINE_AA)
+        # List recent moves - calculate how many moves can fit in the available space
+        moves_start_y = y + 120
+        available_height = self.ui_height - moves_start_y - 20  # Leave 20px margin at bottom
+        max_moves = max(1, available_height // 25)  # Each move takes 25px, minimum 1 move
+        
+        # Show the last moves that fit in the window
+        moves_to_show = moves[-max_moves:] if len(moves) > max_moves else moves
+        for i, move in enumerate(moves_to_show):
+            move_y = moves_start_y + (i * 25)
+            if move_y < self.ui_height - 10:  # Make sure we don't go off screen
+                if len(moves) > max_moves:
+                    move_text = f"{len(moves) - max_moves + i + 1}. {move}"
+                else:
+                    move_text = f"{i + 1}. {move}"
+                cv2.putText(self.ui_canvas, move_text, (x + 15, move_y),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.4, self.text_color, 1, cv2.LINE_AA)
     
     def render_complete_ui(self, board: Board):
         """Render the complete UI including board and player information."""

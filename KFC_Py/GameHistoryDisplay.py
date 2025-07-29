@@ -65,12 +65,13 @@ class GameHistoryDisplay:
         """
         return self.black_history.get_formatted_history()
     
-    def get_formatted_display_text(self, player_color: str) -> List[str]:
+    def get_formatted_display_text(self, player_color: str, available_height: int = 500) -> List[str]:
         """
         Get formatted text for display in UI.
         
         Args:
             player_color: Player color ("W" or "B")
+            available_height: Available height in pixels for displaying moves
             
         Returns:
             List of text lines for display
@@ -92,15 +93,26 @@ class GameHistoryDisplay:
             lines.append(f"Score: {score}")
             return lines
         
-        # Show recent moves (up to 8 to make room for score line at bottom)
-        recent_moves = history[-8:] if len(history) > 8 else history
+        # Calculate how many moves can fit in the display area dynamically
+        # Assume each line takes about 25 pixels, and we need space for title and score (2 lines)
+        lines_per_pixel = 25
+        reserved_lines = 2  # title and score
+        max_lines_for_moves = max(1, (available_height // lines_per_pixel) - reserved_lines)
+        
+        # Show recent moves (dynamic based on available space)
+        recent_moves = history[-max_lines_for_moves:] if len(history) > max_lines_for_moves else history
         
         for i, move_description in enumerate(recent_moves, 1):
-            lines.append(f"{i:2d}. {move_description}")
+            # If we're showing truncated history, adjust numbering
+            if len(history) > max_lines_for_moves:
+                move_number = len(history) - max_lines_for_moves + i
+            else:
+                move_number = i
+            lines.append(f"{move_number:2d}. {move_description}")
         
-        # Add indication if there are more moves
-        if len(history) > 8:
-            lines.append(f"... and {len(history) - 8} more moves")
+        # Add indication if there are more moves (only if truncated)
+        if len(history) > max_lines_for_moves:
+            lines.append(f"... and {len(history) - max_lines_for_moves} more moves")
         
         # Add score at the bottom
         lines.append(f"Score: {score}")
