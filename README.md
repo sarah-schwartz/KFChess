@@ -1,7 +1,7 @@
-# Kung Fu Chess (KFC_Py)
-
+# Kung Fu Chess 
 A fast, keyboard‑driven **“Kung Fu Chess”** engine and UI implemented in Python.  
-Unlike classic turn‑based chess, **pieces can move concurrently** and obey per‑piece cooldowns and physics.  
+Unlike classic turn-based chess, **pieces can move concurrently**, each following its own **movement delay** and physics rules.
+This means that after making a move, each piece must wait a short, individual recovery period before it can move again — creating a real-time flow instead of alternating turns.
 Rendering is done with **OpenCV**, sound effects with **pygame**, and the system is built around a **clean, testable architecture** (commands, states, physics, graphics, pub/sub events).
 
 ---
@@ -182,32 +182,3 @@ Notes:
 - **OpenCV window not closing**: press **ESC** in the game window; we raise a `KeyboardInterrupt` to exit cleanly.
 - **No sound**: ensure `pygame.mixer` is initialized; in CI/tests, sound is mocked automatically.
 - **Assets not found**: verify the working directory so `pieces/` is discovered by `GameFactory.create_game(...)`.
-
----
-
-## Extending the Game
-
-- Add a new **piece type** by composing a `State` with custom `Moves`, `Physics`, and `Graphics`.
-- Hook new **events** by subscribing to `MessageBroker` with your handler.
-- Swap out **rendering** (e.g., to Pygame/SDL or a web frontend) by implementing an `Img` adapter and updating `GraphicsFactory`.
-- Customize **keymaps** and player input flows in `KeyboardInput.py`.
-
----
-
-## Development Notes
-
-- Code is structured for readability and testability; prefer **descriptive names** and English comments.
-- The project ships with `setup.py` for editable installs and a clean import layout.
-- Consider wiring this into CI with `pytest -q --maxfail=1 --disable-warnings`.
-
----
-
-## License
-
-No license file was found in the repository. If you intend to open‑source this project, consider adding a `LICENSE` file (e.g., MIT).
-
----
-
-## Credits
-
-Developed as a learning/project framework for real‑time chess‑like mechanics with simultaneous moves, animation, audio, and testable game logic.
